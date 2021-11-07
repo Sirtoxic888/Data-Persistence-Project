@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,6 +12,7 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
@@ -18,10 +20,16 @@ public class MainManager : MonoBehaviour
     
     private bool m_GameOver = false;
 
+    public int maxScore;
+    public static string bestPlayer;
+
 
     private void Start()
     {
+        LoadName();
+        BestScoreText.text ="BestScore: " + bestPlayer + " " + maxScore;
         ScoreText.text = MenuUI.player + " Score:";
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -70,7 +78,41 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
+        SaveName();
         m_GameOver = true;
         GameOverText.SetActive(true);
+    }
+
+    [System.Serializable]
+    public class Savedata
+    {
+        public string namePlayer;
+        public int score;
+    }
+
+    public void SaveName()
+    {
+        if (m_Points > maxScore)
+        {
+        Savedata data = new Savedata();
+        data.namePlayer = MenuUI.player;
+        data.score = m_Points;
+
+            string json = JsonUtility.ToJson(data);
+
+            File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+        }
+        
+    }
+    public void LoadName()
+    {
+       string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            Savedata data = JsonUtility.FromJson<Savedata>(json);
+            maxScore = data.score;
+            bestPlayer = data.namePlayer;
+        }
     }
 }
